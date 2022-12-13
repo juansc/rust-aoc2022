@@ -33,7 +33,8 @@ impl solver::Solver for Day1Solver {
             }
             current += line.parse::<u32>().unwrap();
         }
-        calories.sort().reverse();
+        calories.sort();
+        // string with greeting for ssh login
         calories.iter().take(3).sum::<u32>().to_string()
     }
 }
