@@ -1,3 +1,6 @@
+use color_eyre;
+use std::str::FromStr;
+
 use crate::solver::Solver;
 
 pub struct Day2Solver {}
@@ -22,10 +25,45 @@ impl Solver for Day2Solver {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Round {
+    you: Choice,
+    opponent: Choice,
+}
+
+impl FromStr for Round {
+    type Err = color_eyre::Report;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut parts = s.chars();
+        let (Some(opponent), Some(' '), Some(you), None) = (parts.next(), parts.next(), parts.next(), parts.next()) else {
+            return Err(color_eyre::eyre::eyre!("bad"));
+        };
+        Ok(Self {
+            you: you.try_into()?,
+            opponent: opponent.try_into()?,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 enum Choice {
     Rock,
     Paper,
     Scissors,
+}
+
+impl TryFrom<char> for Choice {
+    type Error = color_eyre::Report;
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            'A' | 'X' => Ok(Choice::Rock),
+            'B' | 'Y' => Ok(Choice::Paper),
+            'C' | 'Z' => Ok(Choice::Scissors),
+            _ => Err(color_eyre::eyre::eyre!("not a valid move: {value:?}")),
+        }
+    }
 }
 
 fn parse(s: &str) -> Choice {
