@@ -9,19 +9,15 @@ impl Solver for Day2Solver {
     fn solve_part_1(&self, lines: Vec<String>) -> String {
         let mut your_score = 0u32;
         for line in lines {
-            // split string into a vector by space, then get first element
-            let mut parts = line.split(" ");
-            let opponent = parts.next().unwrap();
-            let you = parts.next().unwrap();
-            let opponent_choice = parse(opponent);
-            let you_choice = parse(you);
-            your_score += score(you_choice, opponent_choice);
+            let round = Round::from_str(&line).unwrap();
+            your_score += round.you.outcome(round.opponent).score() + round.you.score();
         }
         your_score.to_string()
     }
 
     fn solve_part_2(&self, lines: Vec<String>) -> String {
-        todo!()
+        "idk".to_string()
+        //todo!()
     }
 }
 
@@ -36,6 +32,9 @@ impl FromStr for Round {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.chars();
+        // Here the trick is that we take a line and consume the characters on by one. For
+        // something really simple where the string format is very simple consuming char one by one
+        // is enough.
         let (Some(opponent), Some(' '), Some(you), None) = (parts.next(), parts.next(), parts.next(), parts.next()) else {
             return Err(color_eyre::eyre::eyre!("bad"));
         };
@@ -53,6 +52,55 @@ enum Choice {
     Scissors,
 }
 
+impl Choice {
+    fn outcome(self, opponent: Choice) -> Outcome {
+        if self.beats(opponent) {
+            Outcome::Win
+        } else if opponent.beats(self) {
+            Outcome::Loss
+        } else {
+            Outcome::Draw
+        }
+    }
+
+    fn beats(self, opponent_move: Choice) -> bool {
+        // This checks if the tuple (your move, opponent move) matches
+        // any of the following patterns. This allows us to check if you
+        // beat your opponent.
+        matches!(
+            (self, opponent_move),
+            (Self::Rock, Self::Scissors)
+                | (Self::Paper, Self::Rock)
+                | (Self::Scissors, Self::Paper)
+        )
+    }
+
+    fn score(self) -> u32 {
+        match self {
+            Self::Rock => 1,
+            Self::Paper => 2,
+            Self::Scissors => 3,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum Outcome {
+    Win,
+    Loss,
+    Draw,
+}
+
+impl Outcome {
+    fn score(self) -> u32 {
+        match self {
+            Self::Win => 6,
+            Self::Draw => 3,
+            Self::Loss => 0,
+        }
+    }
+}
+
 impl TryFrom<char> for Choice {
     type Error = color_eyre::Report;
 
@@ -64,46 +112,6 @@ impl TryFrom<char> for Choice {
             _ => Err(color_eyre::eyre::eyre!("not a valid move: {value:?}")),
         }
     }
-}
-
-fn parse(s: &str) -> Choice {
-    match s {
-        "A" => Choice::Rock,
-        "B" => Choice::Paper,
-        "C" => Choice::Scissors,
-        "X" => Choice::Rock,
-        "Y" => Choice::Paper,
-        "Z" => Choice::Scissors,
-        _ => {
-            panic!("Invalid choice")
-        }
-    }
-}
-
-fn score(you: Choice, opponent: Choice) -> u32 {
-    let choice_score: u32 = match you {
-        Choice::Rock => 1,
-        Choice::Paper => 2,
-        Choice::Scissors => 3,
-    };
-    let outcome_score = match you {
-        Choice::Rock => match opponent {
-            Choice::Rock => 3,
-            Choice::Paper => 0,
-            Choice::Scissors => 6,
-        },
-        Choice::Paper => match opponent {
-            Choice::Rock => 6,
-            Choice::Paper => 3,
-            Choice::Scissors => 0,
-        },
-        Choice::Scissors => match opponent {
-            Choice::Rock => 0,
-            Choice::Paper => 6,
-            Choice::Scissors => 3,
-        },
-    };
-    choice_score + outcome_score
 }
 
 #[cfg(test)]
