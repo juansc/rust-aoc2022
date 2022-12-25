@@ -1,13 +1,14 @@
+use std::env;
 use std::{
     fs::File,
-    io::{BufReader, prelude::*},
+    io::{prelude::*, BufReader},
     path::Path,
 };
-use std::env;
 
-mod solver;
 mod day01;
 mod day02;
+mod day03;
+mod solver;
 
 fn main() {
     // Read from stdin
@@ -25,12 +26,12 @@ fn main() {
     println!("Part 2: {}", solver.solve_part_2(lines.clone()));
 }
 
-
 fn get_solver(day: u8) -> Option<Box<dyn solver::Solver>> {
     match day {
-        1 => { Some(Box::new(day01::Day1Solver {})) }
-        2 => { Some(Box::new(day02::Day2Solver {})) }
-        _ => { None }
+        1 => Some(Box::new(day01::Day1Solver {})),
+        2 => Some(Box::new(day02::Day2Solver {})),
+        3 => Some(Box::new(day03::Day3Solver {})),
+        _ => None,
     }
 }
 
