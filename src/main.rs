@@ -23,7 +23,7 @@ fn main() {
     // rust, read a file as a vector of strings
     let lines = lines_from_file(input);
     println!("Part 1: {}", solver.solve_part_1(lines.clone()));
-    println!("Part 2: {}", solver.solve_part_2(lines.clone()));
+    println!("Part 2: {}", solver.solve_part_2(lines));
 }
 
 fn get_solver(day: u8) -> Option<Box<dyn solver::Solver>> {

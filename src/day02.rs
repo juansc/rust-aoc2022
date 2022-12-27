@@ -1,4 +1,3 @@
-use color_eyre;
 use std::str::FromStr;
 
 use crate::solver::Solver;
@@ -198,13 +197,13 @@ mod test {
     fn test_part_1() {
         let solver = Day2Solver {};
         let lines = lines_from_file("./inputs/unit_test/day02.txt");
-        assert_eq!(solver.solve_part_1(lines.clone()), "15");
+        assert_eq!(solver.solve_part_1(lines), "15");
     }
 
     #[test]
     fn test_part_2() {
         let solver = Day2Solver {};
         let lines = lines_from_file("./inputs/unit_test/day02.txt");
-        assert_eq!(solver.solve_part_2(lines.clone()), "12");
+        assert_eq!(solver.solve_part_2(lines), "12");
     }
 }
