@@ -23,6 +23,7 @@ impl Solver for Day3Solver {
         priority.to_string()
     }
 
+    // This is my ugly, initial approach.
     fn solve_part_2(&self, lines: Vec<String>) -> String {
         let mut priority = 0usize;
         let mut lines = lines;
