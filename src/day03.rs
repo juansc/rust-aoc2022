@@ -1,5 +1,6 @@
+use itertools::Itertools;
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, HashSet},
     fmt,
     str::FromStr,
 };
@@ -7,6 +8,8 @@ use std::{
 use crate::solver::Solver;
 
 pub struct Day3Solver {}
+
+const GROUP_SIZE: usize = 3;
 
 impl Solver for Day3Solver {
     fn solve_part_1(&self, lines: Vec<String>) -> String {
@@ -23,40 +26,26 @@ impl Solver for Day3Solver {
         priority.to_string()
     }
 
-    // This is my ugly, initial approach.
     fn solve_part_2(&self, lines: Vec<String>) -> String {
-        let mut priority = 0usize;
         let mut lines = lines;
         lines.retain(|l| !l.trim().is_empty());
-        let mut deque: VecDeque<String> = VecDeque::from(lines);
-        if deque.len() % 3 != 0 {
-            println!("deque has {} elements", deque.len());
-            panic!("expected a multiple of 3 rucksacks")
-        }
-        loop {
-            let sack1 = Rucksack::from_str(deque.pop_front().unwrap().trim())
-                .unwrap()
-                .keys();
-            let sack2 = Rucksack::from_str(deque.pop_front().unwrap().trim())
-                .unwrap()
-                .keys();
-            let sack3 = Rucksack::from_str(deque.pop_front().unwrap().trim())
-                .unwrap()
-                .keys();
-            let mut all_keys: Vec<Item> = sack1
-                .iter()
-                .copied()
-                .filter(|i| sack2.contains(i) && sack3.contains(i))
-                .collect();
-            if all_keys.len() != 1 {
-                panic!("There were no common keys")
-            }
-            priority += all_keys.pop().unwrap().priority();
-            if deque.is_empty() {
-                break;
-            }
-        }
-        priority.to_string()
+
+        let rucksacks: Vec<Result<Rucksack, _>> =
+            lines.iter().map(|l| Rucksack::from_str(l.trim())).collect();
+        let sum = itertools::process_results(rucksacks, |rs| {
+            Itertools::tuples(rs)
+                .map(|(a, b, c)| {
+                    a.keys()
+                        .iter()
+                        .copied()
+                        .find(|i| b.keys().contains(i) && c.keys().contains(i))
+                        .map(|i| i.priority())
+                        .unwrap()
+                })
+                .sum::<usize>()
+        })
+        .unwrap();
+        sum.to_string()
     }
 }
 
@@ -87,6 +76,7 @@ impl fmt::Display for Item {
     }
 }
 
+#[derive(Debug, Clone)]
 struct Rucksack {
     first_compartment: HashMap<Item, usize>,
     second_compartment: HashMap<Item, usize>,
