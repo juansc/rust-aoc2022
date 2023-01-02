@@ -9,8 +9,6 @@ use crate::solver::Solver;
 
 pub struct Day3Solver {}
 
-const GROUP_SIZE: usize = 3;
-
 impl Solver for Day3Solver {
     fn solve_part_1(&self, lines: Vec<String>) -> String {
         let mut priority = 0usize;
@@ -32,6 +30,7 @@ impl Solver for Day3Solver {
 
         let rucksacks: Vec<Result<Rucksack, _>> =
             lines.iter().map(|l| Rucksack::from_str(l.trim())).collect();
+        // Grab the rucksacks, grab three at a time, and find the common element in all of them.
         let sum = itertools::process_results(rucksacks, |rs| {
             Itertools::tuples(rs)
                 .map(|(a, b, c)| {
