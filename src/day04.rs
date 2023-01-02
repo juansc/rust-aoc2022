@@ -1,52 +1,58 @@
 use crate::solver::Solver;
 use std::ops::RangeInclusive;
 
+use itertools::Itertools;
+
 pub struct Day4Solver {}
 
 impl Solver for Day4Solver {
     fn solve_part_1(&self, lines: Vec<String>) -> String {
-        let mut counter = 0usize;
-        for line in lines {
-            let line = line.trim();
-            let ranges: Vec<&str> = line.split(',').collect();
-            let range_a = ranges.first().unwrap().split('-').collect::<Vec<&str>>();
-            let min_range_a = range_a.first().unwrap().parse::<usize>().unwrap();
-            let max_range_a = range_a.last().unwrap().parse::<usize>().unwrap();
-
-            let range_b = ranges.get(1).unwrap().split('-').collect::<Vec<&str>>();
-            let min_range_b = range_b.first().unwrap().parse::<usize>().unwrap();
-            let max_range_b = range_b.last().unwrap().parse::<usize>().unwrap();
-
-            let range_a = min_range_a..=max_range_a;
-            let range_b = min_range_b..=max_range_b;
-            if contains_latter(&range_a, &range_b) || contains_latter(&range_b, &range_a) {
-                counter += 1;
-            }
-        }
-        counter.to_string()
+        get_ranges(&lines)
+            .iter()
+            .filter(|(a, b)| contains_latter(a, b) || contains_latter(b, a))
+            .count()
+            .to_string()
     }
 
     fn solve_part_2(&self, lines: Vec<String>) -> String {
-        let mut counter = 0usize;
-        for line in lines {
-            let line = line.trim();
-            let ranges: Vec<&str> = line.split(',').collect();
-            let range_a = ranges.first().unwrap().split('-').collect::<Vec<&str>>();
-            let min_range_a = range_a.first().unwrap().parse::<usize>().unwrap();
-            let max_range_a = range_a.last().unwrap().parse::<usize>().unwrap();
-
-            let range_b = ranges.get(1).unwrap().split('-').collect::<Vec<&str>>();
-            let min_range_b = range_b.first().unwrap().parse::<usize>().unwrap();
-            let max_range_b = range_b.last().unwrap().parse::<usize>().unwrap();
-
-            let range_a = min_range_a..=max_range_a;
-            let range_b = min_range_b..=max_range_b;
-            if overlaps_latter(&range_a, &range_b) || overlaps_latter(&range_b, &range_a) {
-                counter += 1;
-            }
-        }
-        counter.to_string()
+        get_ranges(&lines)
+            .iter()
+            .filter(|(a, b)| overlaps_latter(a, b) || overlaps_latter(b, a))
+            .count()
+            .to_string()
     }
+}
+
+// The following functions parses a Vec of String and returns a Vec of InclusiveRange<u32>. Each
+// line is of the form "min-max", where min and max are u32.
+fn get_ranges(lines: &[String]) -> Vec<(RangeInclusive<u32>, RangeInclusive<u32>)> {
+    lines
+        // For each line...
+        .iter()
+        // Run a mapping function...
+        .map(|line| {
+            // That splits the line into two strings...
+            line.split(',')
+                // For each string, split into two using the hyphen, parse each element into a u32,
+                // and collect into a tuple of (u32, u32). Then convert each tuple into a range
+                .map(|range| {
+                    range
+                        .split('-')
+                        .map(|n| n.parse().expect("expected a u32"))
+                        .collect_tuple::<(u32, u32)>()
+                        .map(|(start, end)| start..=end)
+                        .expect("expected each range to be of the form number-number")
+                })
+                // At this point we have a bunch of RangeInclusives. We collect them into pairs
+                .collect_tuple::<(RangeInclusive<_>, RangeInclusive<_>)>()
+                // This makes sure that all our Option<X> are actually Some(x). That way we don't
+                // need to filter out the failures. We _probably_ should, but this is meant to be a
+                // quick exercise.
+                .expect("this should succeed")
+        })
+        // Collect the results into a Vec. Here the type can be inferred as RangeInclusive<_>,
+        // and that in turn was inferred to be RangeInclusive<u32>.
+        .collect::<Vec<_>>()
 }
 
 fn contains_latter<T: PartialOrd>(range1: &RangeInclusive<T>, range2: &RangeInclusive<T>) -> bool {

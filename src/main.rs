@@ -9,6 +9,7 @@ mod day01;
 mod day02;
 mod day03;
 mod day04;
+mod day05;
 mod solver;
 
 fn main() {
@@ -33,6 +34,7 @@ fn get_solver(day: u8) -> Option<Box<dyn solver::Solver>> {
         2 => Some(Box::new(day02::Day2Solver {})),
         3 => Some(Box::new(day03::Day3Solver {})),
         4 => Some(Box::new(day04::Day4Solver {})),
+        5 => Some(Box::new(day05::Day5Solver {})),
         _ => None,
     }
 }
