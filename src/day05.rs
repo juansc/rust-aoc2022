@@ -1,8 +1,8 @@
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take},
-    combinator::{all_consuming, map, opt},
-    sequence::{delimited, preceded},
+    bytes::complete::{tag, take, take_while1},
+    combinator::{all_consuming, map, map_res, opt},
+    sequence::{delimited, preceded, tuple},
     IResult,
 };
 
@@ -10,29 +10,92 @@ use crate::solver::Solver;
 
 pub struct Day5Solver {}
 
-impl Solver for Day5Solver {
-    fn solve_part_1(&self, lines: Vec<String>) -> String {
-        let mut crate_lines = vec![];
-        for line in lines {
-            // All consuming returns an error if the input is not fully consumed. This is to make
-            // sure that our parsers don't accidentally ignore parts of the line.
-            if let Ok((_rest, crate_line)) = all_consuming(parse_crate_line)(&line) {
-                crate_lines.push(crate_line);
-            }
-        }
+impl Day5Solver {
+    fn move_stacks_with_mode(&self, lines: Vec<String>, stack_mode: StackOrder) -> String {
+        let mut lines = lines.into_iter();
+        // This will advance the iterator until we are not able to parse.
+        let mut crate_lines: Vec<_> = (&mut lines)
+            .map_while(|line| {
+                all_consuming(parse_crate_line)(&line)
+                    .ok()
+                    // Recall that the output of parse_crate_line is a IResult<&str, Crate>. The
+                    // call to ok() returns an Option<(&str, rate)>. Then we use map to grab just
+                    // the crate.
+                    .map(|(_, cl)| cl)
+            })
+            .collect();
         // The stacks were given from the top down. Reverse the lines so that the crates can be
         // built from the bottom up.
         crate_lines.reverse();
         let mut crate_stacks = CrateStacks::get_new_stacks(&crate_lines);
-        for stack in &crate_stacks.0 {
-            println!("{:?}", stack);
+
+        assert!(lines.next().unwrap().is_empty());
+
+        let instructions: Vec<_> = (&mut lines)
+            .map_while({
+                |line| {
+                    all_consuming(parse_instruction)(&line)
+                        .ok()
+                        .map(|(_, instr)| instr)
+                }
+            })
+            .collect();
+
+        for ins in instructions {
+            crate_stacks.apply_instruction(&ins, stack_mode);
         }
-        "idk".to_string()
+
+        let top_row = crate_stacks
+            .get_top_crates_for_stack()
+            .iter()
+            .map(|my_crate| my_crate.unwrap_or_else(|| Crate(' ')).0.to_string())
+            .reduce(|acc, e| acc + &e).unwrap();
+
+        top_row
+    }
+}
+
+impl Solver for Day5Solver {
+    fn solve_part_1(&self, lines: Vec<String>) -> String {
+        self.move_stacks_with_mode(lines, StackOrder::Lifo)
     }
 
     fn solve_part_2(&self, lines: Vec<String>) -> String {
-        "idk".to_string()
+        self.move_stacks_with_mode(lines, StackOrder::Fifo)
     }
+}
+
+#[derive(Debug)]
+struct Instruction {
+    quantity: usize,
+    src: usize,
+    dest: usize,
+}
+
+// Taken from fasterthanlime's advent of code.
+fn parse_number(i: &str) -> IResult<&str, usize> {
+    map_res(take_while1(|c: char| c.is_ascii_digit()), |s: &str| {
+        s.parse::<usize>()
+    })(i)
+}
+
+fn parse_pile_number(i: &str) -> IResult<&str, usize> {
+    map(parse_number, |i| i - 1)(i)
+}
+
+fn parse_instruction(s: &str) -> IResult<&str, Instruction> {
+    map(
+        tuple((
+            preceded(tag("move "), parse_number),
+            preceded(tag(" from "), parse_pile_number),
+            preceded(tag(" to "), parse_pile_number),
+        )),
+        |(quantity, src, dest)| Instruction {
+            quantity,
+            src,
+            dest,
+        },
+    )(s)
 }
 
 #[derive(Debug, Clone)]
@@ -48,7 +111,7 @@ impl CrateStack {
     // remove_crates removes num crates from the top of the stack,
     // reverses the removed stack, and returns it. If num is larger
     // the size of this stack then the operation fails.
-    fn remove_crates(&mut self, num: usize) -> Option<CrateStack> {
+    fn remove_crates(&mut self, num: usize, stack_order: StackOrder) -> Option<CrateStack> {
         if num > self.0.len() {
             return None;
         }
@@ -57,9 +120,18 @@ impl CrateStack {
 
         self.0 = remaining.to_vec();
         let mut other = other.to_vec();
-        other.reverse();
+        match stack_order {
+            StackOrder::Lifo => {other.reverse()}
+            _ => {},
+        }
         Some(CrateStack(other))
     }
+}
+
+#[derive(Clone, Copy)]
+enum StackOrder {
+    Fifo,
+    Lifo,
 }
 
 #[derive(Debug, Clone)]
@@ -77,6 +149,28 @@ impl CrateStacks {
             }
         }
         Self(stacks)
+    }
+
+    fn apply_instruction(&mut self, instr: &Instruction, stack_order: StackOrder) {
+        let crates = self
+            .0
+            .get_mut(instr.src)
+            .unwrap()
+            .remove_crates(instr.quantity, stack_order)
+            .unwrap();
+        self.0.get_mut(instr.dest).unwrap().add_crates(&crates);
+    }
+
+    fn get_top_crates_for_stack(&self) -> Vec<Option<Crate>> {
+        let mut my_crates = vec![];
+        for stack in self.0.iter() {
+            let crate_contents = match stack.0.last() {
+                Some(c) => Some(c.clone()),
+                None => None,
+            };
+            my_crates.push(crate_contents);
+        }
+        return my_crates;
     }
 }
 
@@ -150,4 +244,39 @@ fn parse_crate_line(s: &str) -> IResult<&str, Vec<Option<Crate>>> {
 
     // We have finished and can return the remaining string and vector
     Ok((i, v))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::lines_from_file;
+
+    #[test]
+    fn test_part_1() {
+        let solver = Day5Solver{};
+        let lines = lines_from_file("./inputs/unit_test/day05.txt");
+        assert_eq!(solver.solve_part_1(lines), "CMZ");
+    }
+
+    #[test]
+    fn test_part_2() {
+        let solver = Day5Solver{};
+        let lines = lines_from_file("./inputs/unit_test/day05.txt");
+        assert_eq!(solver.solve_part_2(lines), "MCD");
+    }
+
+    #[test]
+    fn test_part_1_full() {
+        let solver = Day5Solver{};
+        let lines = lines_from_file("./inputs/day05.txt");
+        assert_eq!(solver.solve_part_1(lines), "TLNGFGMFN");
+    }
+
+    #[test]
+    fn test_part_2_full() {
+        let solver = Day5Solver{};
+        let lines = lines_from_file("./inputs/day05.txt");
+        assert_eq!(solver.solve_part_2(lines), "FGLQJCMBD");
+    }
 }

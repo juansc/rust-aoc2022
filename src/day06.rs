@@ -109,7 +109,6 @@ fn find_unique_substring_with_pos(in_str: &str, n: usize) -> Option<(String, usi
 mod tests {
 
     use super::*;
-    use test::Bencher;
     use test_case::test_case;
 
     #[test_case(21, "abc".to_string(), "aaaaaaabbbbbbbabababcccccc")]
