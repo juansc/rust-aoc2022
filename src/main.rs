@@ -11,6 +11,7 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
+mod day07;
 mod solver;
 
 fn main() {
@@ -22,6 +23,7 @@ fn main() {
 
     let solver = get_solver(day).unwrap();
     // read file contents as an array of lines without using include_str
+//    let input = format!("./inputs/unit_test/day{:02}.txt", day);
     let input = format!("./inputs/day{:02}.txt", day);
     // rust, read a file as a vector of strings
     let lines = lines_from_file(input);
@@ -37,6 +39,7 @@ fn get_solver(day: u8) -> Option<Box<dyn solver::Solver>> {
         4 => Some(Box::new(day04::Day4Solver {})),
         5 => Some(Box::new(day05::Day5Solver {})),
         6 => Some(Box::new(day06::Day6Solver {})),
+        7 => Some(Box::new(day07::Day7Solver {})),
         _ => None,
     }
 }

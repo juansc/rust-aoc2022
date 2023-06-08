@@ -120,9 +120,8 @@ impl CrateStack {
 
         self.0 = remaining.to_vec();
         let mut other = other.to_vec();
-        match stack_order {
-            StackOrder::Lifo => {other.reverse()}
-            _ => {},
+        if let StackOrder::Lifo = stack_order {
+           other.reverse()
         }
         Some(CrateStack(other))
     }
@@ -164,13 +163,10 @@ impl CrateStacks {
     fn get_top_crates_for_stack(&self) -> Vec<Option<Crate>> {
         let mut my_crates = vec![];
         for stack in self.0.iter() {
-            let crate_contents = match stack.0.last() {
-                Some(c) => Some(c.clone()),
-                None => None,
-            };
+            let crate_contents =  stack.0.last().copied();
             my_crates.push(crate_contents);
         }
-        return my_crates;
+        my_crates
     }
 }
 

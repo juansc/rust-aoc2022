@@ -129,7 +129,7 @@ mod tests {
     fn test_part_1(expected_index: usize, input: &str) {
         let result = find_unique_substring(input, 4);
         let result = result.unwrap();
-        let (s, index) = result;
+        let (_s, index) = result;
         assert_eq!(index, expected_index);
     }
 
@@ -161,7 +161,7 @@ mod tests {
     fn test_part_1_with_vec(expected_index: usize, input: &str) {
         let result = find_unique_substring_with_vec(input, 4);
         let result = result.unwrap();
-        let (s, index) = result;
+        let (_, index) = result;
         assert_eq!(index, expected_index);
     }
 

@@ -60,7 +60,7 @@ impl Item {
     // Here we do some math with the code points to do this in a legible way
     fn priority(&self) -> usize {
         let val = self.0 as u8;
-        let val = if (b'a'..=b'z').contains(&val) {
+        let val = if val.is_ascii_lowercase() {
             val - (b'a') + 1
         } else {
             val - (b'A') + 1 + 26
