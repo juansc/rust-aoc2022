@@ -7,15 +7,15 @@ struct Forest {
     num_visible: usize,
     trees: Grid<u8>,
     tree_is_visible: Grid<bool>,
-    max_tree_visibility: Grid<MaxTreeView>,
+    max_tree_visibility: Grid<Option<MaxTreeView>>,
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone)]
 struct MaxTreeView {
-    left_to_right: Option<MaxTreeViewInDirection>,
-    right_to_left: Option<MaxTreeViewInDirection>,
-    top_to_bottom: Option<MaxTreeViewInDirection>,
-    bottom_to_top: Option<MaxTreeViewInDirection>,
+    left_to_right: MaxTreeViewInDirection,
+    right_to_left: MaxTreeViewInDirection,
+    top_to_bottom: MaxTreeViewInDirection,
+    bottom_to_top: MaxTreeViewInDirection,
 
 }
 
@@ -50,6 +50,7 @@ impl Forest {
         }
     }
 
+    /* Function used for debugging
     fn print_visible(&self) {
         for row in 0..self.trees.height() {
             let mut str: String = "".to_string();
@@ -63,33 +64,22 @@ impl Forest {
             println!("{}", str)
         }
     }
+     */
 
     fn update_max_tree_visibility(&mut self) {
         for idx in self.trees.grid_coordinates() {
             let max_tree_view = MaxTreeView {
-                left_to_right: Some(self.calculate_tree_visibility(idx, ForestDirection::LeftToRight)),
-                right_to_left: Some(self.calculate_tree_visibility(idx, ForestDirection::RightToLeft)),
-                top_to_bottom: Some(self.calculate_tree_visibility(idx, ForestDirection::TopToBottom)),
-                bottom_to_top: Some(self.calculate_tree_visibility(idx, ForestDirection::BottomToTop)),
+                left_to_right: self.calculate_tree_visibility(idx, ForestDirection::LeftToRight),
+                right_to_left: self.calculate_tree_visibility(idx, ForestDirection::RightToLeft),
+                top_to_bottom: self.calculate_tree_visibility(idx, ForestDirection::TopToBottom),
+                bottom_to_top: self.calculate_tree_visibility(idx, ForestDirection::BottomToTop),
             };
             let view = self.max_tree_visibility.cell_mut(idx).unwrap();
-            *view = max_tree_view;
+            *view = Some(max_tree_view);
         }
     }
 
     fn calculate_tree_visibility(&self, coord: GridCoord, direction: ForestDirection) -> MaxTreeViewInDirection {
-        let current_dir = *self.max_tree_visibility.cell(coord).unwrap();
-        let info = match direction {
-            ForestDirection::TopToBottom => { current_dir.top_to_bottom }
-            ForestDirection::BottomToTop => { current_dir.bottom_to_top }
-            ForestDirection::LeftToRight => { current_dir.left_to_right }
-            ForestDirection::RightToLeft => { current_dir.right_to_left }
-        };
-        // If this has already been calculated before just return it.
-        if info.is_some() {
-            return info.unwrap();
-        }
-        // Figure out who to ask next.
         let movement: GridCoord = match direction {
             ForestDirection::TopToBottom => { (0, 1).into() }
             ForestDirection::BottomToTop => { (0, -1).into() }
@@ -171,7 +161,6 @@ impl Solver for Day8Solver {
     fn solve_part_1(&self, lines: Vec<String>) -> String {
         let mut forest = Forest::new(lines);
         forest.update_tree_visibility();
-        forest.print_visible();
         let num_visible = forest.tree_is_visible.grid_coordinates().iter().filter(|&c| *forest.tree_is_visible.cell(*c).unwrap()).count();
         format!("{}", num_visible)
     }
@@ -181,11 +170,14 @@ impl Solver for Day8Solver {
         forest.update_max_tree_visibility();
         let mut max_visibility = 0;
         for idx in forest.max_tree_visibility.grid_coordinates() {
-            let vis = forest.max_tree_visibility.cell(idx).unwrap();
-            let score = vis.top_to_bottom.unwrap().distance *
-                vis.bottom_to_top.unwrap().distance *
-                vis.left_to_right.unwrap().distance *
-                vis.right_to_left.unwrap().distance;
+            // Grid requires that we always unwrap, since the entry may not exist (because it's out
+            // of bounds). We unwrap one more time because tree visibility may not have been
+            // calculated, so it is itself an option.
+            let vis = forest.max_tree_visibility.cell(idx).unwrap().unwrap();
+            let score = vis.top_to_bottom.distance *
+                vis.bottom_to_top.distance *
+                vis.left_to_right.distance *
+                vis.right_to_left.distance;
             if score > max_visibility {
                 max_visibility = score;
             }
