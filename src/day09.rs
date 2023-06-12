@@ -71,26 +71,24 @@ impl Rope {
             let dist = prev_knot - current_knot;
             let dx = dist.x;
             let dy = dist.y;
+
             // We will simplify the problem by assuming that we update the tail immediately after any
             // movement. We don't have to handle the case where the head is so far away from the tail
             // that is has to chase it far away. We only have to handle the case where
             // 1. The head is two spaces away either LEFT, RIGHT, UP, or DOWN
             // 2. The head is a chess knight's move away from the tail
-
-            // One component is zero, so we must move the tail only in that direction.
-            if dx * dy == 0 {
-                if dy == 0 {
-                    // If negative make it -1, and if positive make it 1.
-                    self.knots[idx] = current_knot + (dx.abs() / dx, 0).into();
-                } else {
-                    // If negative make it -1, and if positive make it 1.
-                    self.knots[idx] = current_knot + (0, dy.abs() / dy).into();
-                }
-                continue;
-            }
-            // This is the chess knight's movement situation. The movement will be to convert each
-            // orthogonal vector to the unit size with the same sign, so (-5, 10) -> (-1, 1).
-            self.knots[idx] = current_knot + (dx.abs() / dx, dy.abs() / dy).into();
+            // In the first case we will move the tail one space in the direction of the head.
+            // In the second case we need to move the tail one space in the direction of the head
+            // in each dimension.
+            let new_dx = match dx {
+                0 => 0,
+                _ => dx / dx.abs(),
+            };
+            let new_dy = match dy {
+                0 => 0,
+                _ => dy / dy.abs(),
+            };
+            self.knots[idx] = current_knot + (new_dx, new_dy).into();
         }
     }
 
