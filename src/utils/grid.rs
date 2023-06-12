@@ -1,10 +1,10 @@
 use std::fmt::{Debug, Formatter};
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GridCoord {
-    x: isize,
-    y: isize,
+    pub x: isize,
+    pub y: isize,
 }
 
 impl Add for GridCoord {
@@ -14,6 +14,17 @@ impl Add for GridCoord {
         Self {
             x: self.x + other.x,
             y: self.y + other.y,
+        }
+    }
+}
+
+impl Sub for GridCoord {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
         }
     }
 }
