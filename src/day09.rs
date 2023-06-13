@@ -23,13 +23,13 @@ fn simulate_rope(rope: &mut Rope, lines: Vec<String>) -> usize {
     let mut uniq_pos = HashSet::new();
     for line in lines {
         let parts: Vec<&str> = line.split_whitespace().collect();
-        let direction = match *parts.get(0).unwrap() {
+        let direction = match *parts.first().unwrap() {
             "R" => RopeMovement::Right,
             "L" => RopeMovement::Left,
             "U" => RopeMovement::Up,
             "D" => RopeMovement::Down,
             _ => {
-                println!("Invalid direction: {}", parts.get(0).unwrap());
+                println!("Invalid direction: {}", parts.first().unwrap());
                 panic!("Invalid direction")
             }
         };
@@ -157,15 +157,15 @@ mod test {
     fn test_part_2() {
         let solver = Day9Solver {};
         let lines: Vec<String> = vec![
-            "R 5".to_string(),
-            "U 8".to_string(),
-            "L 8".to_string(),
-            "D 3".to_string(),
-            "R 17".to_string(),
-            "D 10".to_string(),
-            "L 25".to_string(),
-            "U 20".to_string(),
-        ];
+            "R 5",
+            "U 8",
+            "L 8",
+            "D 3",
+            "R 17",
+            "D 10",
+            "L 25",
+            "U 20",
+        ].iter().map(|s| s.to_string()).collect();
         assert_eq!(solver.solve_part_2(lines), "36")
     }
 

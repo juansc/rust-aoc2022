@@ -1,9 +1,9 @@
-use std::env;
 use std::{
     fs::File,
-    io::{prelude::*, BufReader},
+    io::{BufReader, prelude::*},
     path::Path,
 };
+use std::env;
 
 mod day01;
 mod day02;
@@ -14,6 +14,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 mod solver;
 mod utils;
 
